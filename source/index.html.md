@@ -1,189 +1,136 @@
 ---
-title: API Reference
+title: Configuration API
 
 language_tabs:
-  - shell
-  - ruby
-  - python
-  - javascript
+  - http
+  - json
 
 toc_footers:
-  - <a href='#'>Sign Up for a Developer Key</a>
   - <a href='https://github.com/tripit/slate'>Documentation Powered by Slate</a>
-
-includes:
-  - errors
 
 search: true
 ---
 
-# Introduction
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
+# Configuration API
 
-We have language bindings in Shell, Ruby, and Python! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
+The Configuration API is a secure service requiring an authentication token. These service API convert the incoming JSON objects to REST Configuration Service, call the IS Tier Configuration (REST) service. Upon received response from Configuration Service, Same will be sent back to Clients.
+The API supports these functions:
 
-This example API documentation page was created with [Slate](https://github.com/tripit/slate). Feel free to edit it and use it as a base for your own API's documentation.
+* Validate incoming request and throw appropriate errors.
+* Returns available configurations based on input REST request.
 
-# Authentication
+## Version
+1.0 (Targeted for Nov 2016 release) 
 
-> To authorize, use this code:
+## Usage
+Applications need the ability to change their behavior without changing the code. This is done though configurations. These configurations can be done locally or remotely. While local configurations are very effective at storing end user preferences, remote configurations are generally a better choice for storing global configurations that remain under control of the system administrators. The Configurations API is a tool than can be used by multiple consumers (ex KP Mobile, RWD) to retrieve such global configuration values that are under the control of KP DPT admins.
 
-```ruby
-require 'kittn'
+The configuration values returned by the API are global, in that all users of the system will see the same value. They are identified by a specific configuration name. Each application has it's own list of configurations. So, Mobile Flagship and RWD KP.org may both have a configuration (Time Out Period) but maintain different values appropriate for the different channels.
 
-api = Kittn::APIClient.authorize!('meowmeowmeow')
+## API Behavior
+This API calls the Configuration Service to retrieve values for given configuration name. This API will support both Single and Multiple results mode for given query.
+Single Result Mode: For a given configuration and application name, the API will retrieve one configuration value. The Service/API will fetch that value and provide it to the client in JSON format.
+Multi result Mode: Will allow multiple configuration values to be returned in a single API call. Ex : X-configName = Records_Per_Page, NumberOfBillsToShow (comma separated config names) (OR) X-configName = ALL ( All configurations and corresponding values available for provided application name (Flagship/KP Mobile)
+The various operations generally require the following information to work:
+
+* `X-configName`: This defines the configuration name to be queried. ex : Records_Per_Page
+
+* `X-appName`: This defines application name to be queried. This is standard API header. Current version of API/Service will support only for Mobile consumers and accepts stranded mobile app name as Flagship.
+
+# Request Response Elements
+
+## HTTP Request
+API URI: https://api.kaiserpermanente.org/mycare/v1.0/configurations - GET
+
+## HTTP Request Headers
+
+Header Name | Required | Supported Values | Description
+----------- | -------- | ---------------- | -----------
+`X-useragentcategory` | Yes | I for iOS, A for Android, M for mobile web | User Agent Category
+`X-osversion` | Yes | For example 5.1. | Device OS Version.
+`X-useragenttype` | Yes | For example: iPhone5, Samsung etc. | Type of device for thick clients or user agent type in case of browser based Responsive Web Apps.
+`X-appName` | Yes | For example KP Mobile. | Name of the App.
+`ssosession` | Yes | Valid OAM token | ssosession header received from sign-on
+`X-configName` | Yes | For example: Records_Per_Page,NumberOfBillsToShow	Generic configuration name
+
+## HTTP Response Headers
+
+Response Field | Description
+-------------- | -----------
+`configName` | Given configuration name
+`listOfConfigs` | JSON Array which consists of List of configurations and corresponding values
+`listOfConfigs`[i].configName | Given configuration name.
+`listOfConfigs[i].application` | Given Application name.
+`listOfConfigs[i].value` | Value of the specific configuration 
+
+## HTTP Response Codes
+
+HTTP Code | Description
+--------- | -----------
+200 | Success.
+400 | Invalid {Input Field}, Please check the request.
+403 | Access Denied. User is not entitled to access the requested API.
+404 | Un-supported URI is requested.
+412 | PreCondition failed. One or more required params or header missing.
+503 | System error. Something went wrong while processing the request. Could be API or backend error.
+
+# Sample Request Headers
+The sample request headers are in addition to the standard API headers.
+
+
+```http
+>Single result mode request headers
+X-configName = NumberOfBillsToShow
+X-appName = Flagship
+
+> Multi result mode sample request headers
+X-configName = NumberOfBillsToShow,VideoVisitTypes
+X-appName = Flagship
+
 ```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-```
-
-```shell
-# With shell, you can just pass the correct header with each request
-curl "api_endpoint_here"
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-```
-
-> Make sure to replace `meowmeowmeow` with your API key.
-
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
-
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
-
-`Authorization: meowmeowmeow`
-
-<aside class="notice">
-You must replace <code>meowmeowmeow</code> with your personal API key.
-</aside>
-
-# Kittens
-
-## Get All Kittens
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
-```
-
-```shell
-curl "http://example.com/api/kittens"
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let kittens = api.kittens.get();
-```
-
-> The above command returns JSON structured like this:
 
 ```json
+> Single result mode sample response
+
+[{
+   "configName": "NumberOfBillsToShow",
+   "listOfConfigs":    [
+            {
+         "configName": "NumberOfBillsToShow",
+         "application": "Flagship",
+         "value": "15"
+      }
+   ]
+}]
+
+> Multi result mode sample sample response
+
 [
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
-  },
-  {
-    "id": 2,
-    "name": "Max",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
-  }
+      {
+      "configName": "NumberOfBillsToShow",
+      "listOfConfigs":       [
+                  {
+            "configName": "NumberOfBillsToShow",
+            "application": "Flagship",
+            "value": "15"
+         }
+      ]
+   },
+      {
+      "configName": "VideoVisitTypes",
+      "listOfConfigs":       [
+                  {
+            "configName": "VideoVisitTypes",
+            "application": "Flagship",
+            "value": "[ “VideoVisit”, “Video Visit”, “Group Video Visit”]"
+         }
+      ]
+   }
 ]
 ```
 
-This endpoint retrieves all kittens.
 
-### HTTP Request
 
-`GET http://example.com/api/kittens`
 
-### Query Parameters
-
-Parameter | Default | Description
---------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
-
-<aside class="success">
-Remember — a happy kitten is an authenticated kitten!
-</aside>
-
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```shell
-curl "http://example.com/api/kittens/2"
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let max = api.kittens.get(2);
-```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "id": 2,
-  "name": "Max",
-  "breed": "unknown",
-  "fluffiness": 5,
-  "cuteness": 10
-}
-```
-
-This endpoint retrieves a specific kitten.
-
-<aside class="warning">Inside HTML code blocks like this one, you can't use Markdown, so use <code>&lt;code&gt;</code> blocks to denote code.</aside>
-
-### HTTP Request
-
-`GET http://example.com/kittens/<ID>`
-
-### URL Parameters
-
-Parameter | Description
---------- | -----------
-ID | The ID of the kitten to retrieve
 
