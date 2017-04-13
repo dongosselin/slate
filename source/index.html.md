@@ -129,6 +129,39 @@ X-appName = Flagship
    }
 ]
 ```
+#Method Name
+A brief description of what the method does.
+#Syntax
+Display the actual method call used in the code.
+Description
+More detailed information about the method; information developers need to know to call the method.
+‘Note: For all of the following sections, if the section doesn't apply to the specific method or has no
+elements, such as no return value or has no related methods, explicitly state that by using a term
+such as "None" or "Not applicable." This tells developers that you didn't forget to put information in
+those sections.
+#Parameters
+List all of the parameters here, in the order they appear in the syntax. You can either use a pseudo-list
+format as the following or put the information into a table, shown after the pseudo-list.
+Parameter1 - data type
+What the parameter does. Optional/required. Examples.
+Parametern - data type
+What the parameter does. Optional/required. Examples.
+Listing parameters in a table format:
+
+#Return Value
+Value returned by the method:
+returnValue - data type
+Describe the return value.
+#Examples
+A short code snippet here, with explanation, showing use of this method.
+#Errors
+List the errors that can be returned for this method, with the level of error and the recommended
+workaround or solution.
+
+#Notes
+Any supplemental, “nice to know” information.
+#See Also
+Cross-references to related methods.
 
 
 
